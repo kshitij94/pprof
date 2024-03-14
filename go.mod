@@ -1,4 +1,4 @@
-module github.com/google/pprof
+module github.com/kshitij94/pprof
 
 go 1.19
 
