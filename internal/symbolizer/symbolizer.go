@@ -140,53 +140,67 @@ func doLocalSymbolize(prof *profile.Profile, fast, force bool, obj plugin.ObjToo
 	defer mt.close()
 
 	functions := make(map[profile.Function]*profile.Function)
+	locMap := make(map[*profile.Mapping][]*profile.Location)
 	for _, l := range mt.prof.Location {
-		m := l.Mapping
-		segment := mt.segments[m]
-		if segment == nil {
-			// Nothing to do.
-			continue
+		if _, ok := locMap[l.Mapping]; !ok {
+			locMap[l.Mapping] = []*profile.Location{}
 		}
+		locMap[l.Mapping] = append(locMap[l.Mapping], l)
+	}
 
-		stack, err := segment.SourceLine(l.Address)
-		if err != nil || len(stack) == 0 {
-			// No answers from addr2line.
-			continue
+	for m, locations := range locMap {
+		for _, l := range locations {
+			segment := mt.segments[m]
+			if segment == nil {
+				// Nothing to do.
+				continue
+			}
+
+			stack, err := segment.SourceLine(l.Address)
+			if err != nil || len(stack) == 0 {
+				// No answers from addr2line.
+				continue
+			}
+
+			l.Line = make([]profile.Line, len(stack))
+			l.IsFolded = false
+			for i, frame := range stack {
+				if frame.Func != "" {
+					m.HasFunctions = true
+				}
+				if frame.File != "" {
+					m.HasFilenames = true
+				}
+				if frame.Line != 0 {
+					m.HasLineNumbers = true
+				}
+				f := &profile.Function{
+					Name:       frame.Func,
+					SystemName: frame.Func,
+					Filename:   frame.File,
+				}
+				if fp := functions[*f]; fp != nil {
+					f = fp
+				} else {
+					functions[*f] = f
+					f.ID = uint64(len(mt.prof.Function)) + 1
+					mt.prof.Function = append(mt.prof.Function, f)
+				}
+				l.Line[i] = profile.Line{
+					Function: f,
+					Line:     int64(frame.Line),
+					Column:   int64(frame.Column),
+				}
+			}
+
+			if len(stack) > 0 {
+				m.HasInlineFrames = true
+			}
 		}
-
-		l.Line = make([]profile.Line, len(stack))
-		l.IsFolded = false
-		for i, frame := range stack {
-			if frame.Func != "" {
-				m.HasFunctions = true
-			}
-			if frame.File != "" {
-				m.HasFilenames = true
-			}
-			if frame.Line != 0 {
-				m.HasLineNumbers = true
-			}
-			f := &profile.Function{
-				Name:       frame.Func,
-				SystemName: frame.Func,
-				Filename:   frame.File,
-			}
-			if fp := functions[*f]; fp != nil {
-				f = fp
-			} else {
-				functions[*f] = f
-				f.ID = uint64(len(mt.prof.Function)) + 1
-				mt.prof.Function = append(mt.prof.Function, f)
-			}
-			l.Line[i] = profile.Line{
-				Function: f,
-				Line:     int64(frame.Line),
-				Column:   int64(frame.Column),
-			}
-		}
-
-		if len(stack) > 0 {
-			m.HasInlineFrames = true
+		// All locations for the mapping m have been symbolized.
+		// Free up the resources.
+		if segment, ok := mt.segments[m]; ok {
+			segment.Close()
 		}
 	}
 
