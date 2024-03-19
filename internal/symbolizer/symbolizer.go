@@ -127,7 +127,7 @@ func statusCodeError(resp *http.Response) error {
 // in a profile. mode enables some options to control
 // symbolization.
 func doLocalSymbolize(prof *profile.Profile, fast, force bool, obj plugin.ObjTool, ui plugin.UI) error {
-	ui.Print("\n inside doLocalSymbolize ")
+	ui.PrintErr("\n inside doLocalSymbolize ")
 
 	if fast {
 		if bu, ok := obj.(*binutils.Binutils); ok {
@@ -152,7 +152,7 @@ func doLocalSymbolize(prof *profile.Profile, fast, force bool, obj plugin.ObjToo
 
 	for m, locations := range locMap {
 		if m.File != "" {
-			ui.Print("\n Starting processing " + m.File)
+			ui.PrintErr("\n Starting processing " + m.File)
 		}
 		for _, l := range locations {
 			segment := mt.segments[m]
@@ -208,7 +208,7 @@ func doLocalSymbolize(prof *profile.Profile, fast, force bool, obj plugin.ObjToo
 			segment.Close()
 		}
 		if m.File != "" {
-			ui.Print("\n Completed processing " + m.File)
+			ui.PrintErr("\n Completed processing " + m.File)
 		}
 	}
 
