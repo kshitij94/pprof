@@ -368,12 +368,12 @@ func newMapping(prof *profile.Profile, obj plugin.ObjTool, ui plugin.UI, force b
 		}
 		f, err := obj.Open(m.File, m.Start, m.Limit, m.Offset, m.KernelRelocationSymbol)
 		if err != nil {
-			ui.PrintErr("Local symbolization failed for ", name, ": ", err)
+			ui.PrintErr("testing symbolization failed for ", name, ": ", err)
 			missingBinaries = true
 			continue
 		}
 		if fid := f.BuildID(); m.BuildID != "" && fid != "" && fid != m.BuildID {
-			ui.PrintErr("Local symbolization failed for ", name, ": build ID mismatch")
+			ui.PrintErr("testing symbolization failed for ", name, ": build ID mismatch")
 			f.Close()
 			continue
 		}
