@@ -127,6 +127,8 @@ func statusCodeError(resp *http.Response) error {
 // in a profile. mode enables some options to control
 // symbolization.
 func doLocalSymbolize(prof *profile.Profile, fast, force bool, obj plugin.ObjTool, ui plugin.UI) error {
+	ui.Print("\n inside doLocalSymbolize ")
+
 	if fast {
 		if bu, ok := obj.(*binutils.Binutils); ok {
 			bu.SetFastSymbolization(true)
