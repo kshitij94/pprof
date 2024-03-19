@@ -149,6 +149,9 @@ func doLocalSymbolize(prof *profile.Profile, fast, force bool, obj plugin.ObjToo
 	}
 
 	for m, locations := range locMap {
+		if m.File != "" {
+			ui.Print("\n Starting processing " + m.File)
+		}
 		for _, l := range locations {
 			segment := mt.segments[m]
 			if segment == nil {
@@ -201,6 +204,9 @@ func doLocalSymbolize(prof *profile.Profile, fast, force bool, obj plugin.ObjToo
 		// Free up the resources.
 		if segment, ok := mt.segments[m]; ok {
 			segment.Close()
+		}
+		if m.File != "" {
+			ui.Print("\n Completed processing " + m.File)
 		}
 	}
 
